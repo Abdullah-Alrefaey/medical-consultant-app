@@ -1,6 +1,6 @@
 # Importing Packages
 from PyQt5 import QtWidgets
-import mainGUI as m
+import ClientGUI as m
 import sys
 import socket
 import selectors
@@ -39,14 +39,14 @@ def start_connection(host, port, request):
 
 
 
-class MedicalConsultant(m.Ui_MainWindow):
+class MedicalConsultantClient(m.Ui_MainWindow):
 
     def __init__(self, starterWindow):
         """
         Main loop of the UI
         :param mainWindow: QMainWindow Object
         """
-        super(MedicalConsultant, self).setupUi(starterWindow)
+        super(MedicalConsultantClient, self).setupUi(starterWindow)
 
         # self.client_message_text.setText("Hello")
 
@@ -98,7 +98,7 @@ def main():
     """
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
-    ui = MedicalConsultant(MainWindow)
+    ui = MedicalConsultantClient(MainWindow)
     MainWindow.show()
 
     sys.exit(app.exec_())

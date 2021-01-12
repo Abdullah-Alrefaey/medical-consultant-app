@@ -1,68 +1,44 @@
 # Importing Packages
 from PyQt5 import QtWidgets
-import mainGUI as m
+import ServerGUI as m
 import sys
 import socket
 import selectors
 import types
 import traceback
-import libclient
+import libserver
 
 sel = selectors.DefaultSelector()
 
 
-def create_request(action, value, msg):
-    if action == "search":
-        return dict(
-            type="text/json",
-            encoding="utf-8",
-            content=dict(action=action, value=value, msg=msg),
-        )
-    else:
-        return dict(
-            type="binary/custom-client-binary-type",
-            encoding="binary",
-            content=bytes(action + value, encoding="utf-8"),
-        )
+def accept_wrapper(sock):
+    conn, addr = sock.accept()  # Should be ready to read
+    print("accepted connection from", addr)
+    conn.setblocking(False)
+    message = libserver.Message(sel, conn, addr)
+    sel.register(conn, selectors.EVENT_READ, data=message)
 
 
-def start_connection(host, port, request):
-    addr = (host, port)
-    print("starting connection to", addr)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setblocking(False)
-    sock.connect_ex(addr)
-    events = selectors.EVENT_READ | selectors.EVENT_WRITE
-    message = libclient.Message(sel, sock, addr, request)
-    sel.register(sock, events, data=message)
-
-
-
-
-class MedicalConsultant(m.Ui_MainWindow):
+class MedicalConsultantServer(m.Ui_MainWindow):
 
     def __init__(self, starterWindow):
         """
         Main loop of the UI
         :param mainWindow: QMainWindow Object
         """
-        super(MedicalConsultant, self).setupUi(starterWindow)
+        super(MedicalConsultantServer, self).setupUi(starterWindow)
 
-        # self.client_message_text.setText("Hello")
+        # Setup Start Server Button
+        self.start_btn.clicked.connect(self.start_server)
 
-        # Setup Connect Button
-        self.connect_btn.clicked.connect(self.connect_server)
-
-        self.client_message_text.returnPressed.connect(self.message_changed)
+        self.server_message_text.returnPressed.connect(self.message_changed)
 
 
-    def connect_server(self):
+    def start_server(self):
         print("Clicked Connect")
-        host, port, action, value = self.host.text(), int(self.port.text()), self.action.text(), self.value.text()
+        host, port = self.host.text(), int(self.port.text())
         message = self.client_message_text.text()
-        request = create_request(action, value, message)
-        start_connection(host, port, request)
-        print(host, port, action, value)
+        print(host, port)
 
         try:
             while True:
@@ -87,8 +63,8 @@ class MedicalConsultant(m.Ui_MainWindow):
 
 
     def message_changed(self):
-        message = self.client_message_text.text()
-        self.client_message_text.clear()
+        message = self.server_message_text.text()
+        self.server_message_text.clear()
 
 
 def main():
@@ -98,7 +74,7 @@ def main():
     """
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
-    ui = MedicalConsultant(MainWindow)
+    ui = MedicalConsultantServer(MainWindow)
     MainWindow.show()
 
     sys.exit(app.exec_())
