@@ -59,3 +59,4 @@ except KeyboardInterrupt:
     print("caught keyboard interrupt, exiting")
 finally:
     sel.close()
+
