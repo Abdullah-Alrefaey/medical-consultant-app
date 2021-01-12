@@ -11,12 +11,12 @@ import libclient
 sel = selectors.DefaultSelector()
 
 
-def create_request(action, value):
+def create_request(action, value, msg):
     if action == "search":
         return dict(
             type="text/json",
             encoding="utf-8",
-            content=dict(action=action, value=value),
+            content=dict(action=action, value=value, msg=msg),
         )
     else:
         return dict(
@@ -59,7 +59,8 @@ class MedicalConsultant(m.Ui_MainWindow):
     def connect_server(self):
         print("Clicked Connect")
         host, port, action, value = self.host.text(), int(self.port.text()), self.action.text(), self.value.text()
-        request = create_request(action, value)
+        message = self.client_message_text.text()
+        request = create_request(action, value, message)
         start_connection(host, port, request)
         print(host, port, action, value)
 

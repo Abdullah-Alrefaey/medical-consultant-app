@@ -29,7 +29,6 @@ class Ui_MainWindow(object):
         self.client_message_text.setFont(font)
         self.client_message_text.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.client_message_text.setInputMask("")
-        self.client_message_text.setText("")
         self.client_message_text.setObjectName("client_message_text")
         self.verticalLayout_2.addWidget(self.client_message_text)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
@@ -148,6 +147,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.client_message_text.setText(_translate("MainWindow", "Message From Client"))
         self.client_message_text.setPlaceholderText(_translate("MainWindow", "Enter Your Message"))
         self.label_2.setText(_translate("MainWindow", "From Server:"))
         self.server_message_text.setText(_translate("MainWindow", "Null"))

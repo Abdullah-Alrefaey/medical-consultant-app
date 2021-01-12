@@ -33,7 +33,7 @@
            <string/>
           </property>
           <property name="text">
-           <string/>
+           <string>Message From Client</string>
           </property>
           <property name="placeholderText">
            <string>Enter Your Message</string>

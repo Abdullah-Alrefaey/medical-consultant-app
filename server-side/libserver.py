@@ -195,6 +195,10 @@ class Message:
             encoding = self.jsonheader["content-encoding"]
             self.request = self._json_decode(data, encoding)
             print("received request", repr(self.request), "from", self.addr)
+
+            # Message Received From Client is here
+            client_message = self.request['msg']
+            print(f"Client Message: {client_message}")
         else:
             # Binary or unknown content-type
             self.request = data
