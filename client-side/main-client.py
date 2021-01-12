@@ -4,7 +4,6 @@ import ClientGUI as m
 import sys
 import socket
 import selectors
-import types
 import traceback
 import libclient
 
@@ -57,12 +56,10 @@ class MedicalConsultantClient(m.Ui_MainWindow):
 
 
     def connect_server(self):
-        print("Clicked Connect")
         host, port, action, value = self.host.text(), int(self.port.text()), self.action.text(), self.value.text()
         message = self.client_message_text.text()
         request = create_request(action, value, message)
         start_connection(host, port, request)
-        print(host, port, action, value)
 
         try:
             while True:
