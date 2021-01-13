@@ -4,7 +4,7 @@ import ClientGUI as m
 import sys
 import socket
 import time
-import threading
+from threading import Timer
 
 HEADER = 64
 FORMAT = 'utf-8'
@@ -32,7 +32,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.set_interval(func, sec)
             func()
 
-        t = threading.Timer(sec, func_wrapper)
+        t = Timer(sec, func_wrapper)
         t.start()
         return t
 
