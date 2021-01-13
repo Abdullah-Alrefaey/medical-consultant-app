@@ -7,11 +7,8 @@ import time
 import threading
 
 HEADER = 64
-PORT = 5050
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
-SERVER = "192.168.1.108"
-ADDR = (SERVER, PORT)
 
 
 class MedicalConsultantClient(m.Ui_MainWindow):
@@ -30,6 +27,15 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.client_message_text.setDisabled(True)
 
 
+    def set_interval(self, func, sec):
+        def func_wrapper():
+            self.set_interval(func, sec)
+            func()
+
+        t = threading.Timer(sec, func_wrapper)
+        t.start()
+        return t
+
     def connect_server(self):
         SERVER, PORT = self.host.text(), int(self.port.text())
         client_name = "@" + self.client_name_text.text()
@@ -47,24 +53,22 @@ class MedicalConsultantClient(m.Ui_MainWindow):
 
             # Start Handling incoming messages from other client
             # Start a new thread for this Client
-            thread = threading.Thread(target=self.handle_received_message)
-            thread.start()
+            # thread = threading.Thread(target=self.set_interval, args=(self.handle_received_message, 0.3))
+            # thread.start()
+            self.set_interval(self.handle_received_message, 0.4)
         except:
             raise Exception("Couldn't connect to server")
-
 
     def disconnect_server(self):
         self.send_message(DISCONNECT_MESSAGE)
         self.status_label.setText("Disconnect From Server!")
         self.client_message_text.setDisabled(True)
 
-
     def handle_received_message(self):
-        connected = True
-        while connected:
+        # print("Start Receiving..")
+        if self.client:
             received_message = self.client.recv(2048).decode(FORMAT)
             self.received_message_text.setText(received_message)
-
 
     def message_changed(self):
         message = self.client_message_text.text()
@@ -79,8 +83,8 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         send_length += b' ' * (HEADER - len(send_length))
         self.client.send(send_length)
         self.client.send(message)
-        received_message = self.client.recv(2048).decode(FORMAT)
-        self.server_message_text.setText(received_message)
+        # received_message = self.client.recv(2048).decode(FORMAT)
+        # self.server_message_text.setText(received_message)
 
 
 def main():
