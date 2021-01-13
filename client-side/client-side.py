@@ -9,6 +9,7 @@ from threading import Timer
 HEADER = 64
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
+TIMEOUT_MESSAGE = "!TIMEOUT"
 
 
 class MedicalConsultantClient(m.Ui_MainWindow):
@@ -25,6 +26,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.disconnect_btn.clicked.connect(self.disconnect_server)
         self.client_message_text.returnPressed.connect(self.message_changed)
         self.client_message_text.setDisabled(True)
+        self.disconnect_btn.setDisabled(True)
 
 
     def set_interval(self, func, sec):
@@ -45,7 +47,9 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.client.connect(ADDR)
             self.status_label.setText("Connected To Successfully!")
+            self.server_message_text.setText("...")
             self.client_message_text.setDisabled(False)
+            self.disconnect_btn.setDisabled(False)
             time.sleep(0.1)
             self.send_message(client_name)
             time.sleep(0.1)
@@ -61,13 +65,22 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.send_message(DISCONNECT_MESSAGE)
         self.status_label.setText("Disconnect From Server!")
         self.client_message_text.setDisabled(True)
+        self.disconnect_btn.setDisabled(True)
         self.client_timer.cancel()
 
     def handle_received_message(self):
-        # print("Start Receiving..")
         if self.client:
             received_message = self.client.recv(2048).decode(FORMAT)
-            self.received_message_text.setText(received_message)
+
+            # Handle TIMEOUT Connection
+            if received_message == TIMEOUT_MESSAGE:
+                self.client_timer.cancel()
+                self.server_message_text.setText(received_message)
+                self.status_label.setText("Disconnect From Server!")
+                self.client_message_text.setDisabled(True)
+                self.disconnect_btn.setDisabled(True)
+            else:
+                self.received_message_text.setText(received_message)
 
     def message_changed(self):
         message = self.client_message_text.text()
