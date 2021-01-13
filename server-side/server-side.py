@@ -7,40 +7,38 @@ SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
-TIMEOUT_SECONDS = 20
-NUM_CLIENT = 0
+TIMEOUT_SECONDS = 8
 clientsDB = {}
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
 
-# def reset_client_timer(conn, sec):
-#     timer = threading.Timer(sec, disconnect_client, (conn, ))
-#     timer.start()
+def reset_client_timer(timerObj, conn, sec):
+    if timerObj is None:
+        timer = threading.Timer(sec, disconnect_client, (conn, "!TIMEOUT"))
+        timer.start()
+        print("Timer Started..")
+        return timer
+    else:
+        timerObj.cancel()
+        print("Timer Canceled")
+        timer = threading.Timer(sec, disconnect_client, (conn, "!TIMEOUT"))
+        timer.start()
+        print("Timer Started..")
+        return timer
+        
 
-
-def start_client_timer(conn, sec):
-    timer = threading.Timer(sec, disconnect_client, (conn, ))
-    timer.start()
-    print("Timer Started..")
-    return timer
-
-def cancel_client_timer(tim):
-    tim.cancel()
-    print("Timer Canceled")
-
-
-def disconnect_client(conn):
+def disconnect_client(conn, msg):
     print("Disconnecting Client..")
-    connected = False
+    conn.send(f"{msg}".encode(FORMAT))
     conn.close()
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 2}")
 
 
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
-    client_timer = start_client_timer(conn, 5)
+    client_timer = reset_client_timer(None, conn, TIMEOUT_SECONDS)
 
     connected = True
     while connected:
@@ -53,28 +51,25 @@ def handle_client(conn, addr):
                 if msg[0] == "@":
                     clientsDB[addr[1]]['name'] = msg[1:]
                     print(f"Client Name is: {clientsDB[addr[1]]['name']}")
-                    cancel_client_timer(client_timer)
-                    client_timer = start_client_timer(conn, 5)
+
                 # Save Receiver name one time
                 elif msg[0] == "#":
                     clientsDB[addr[1]]['receiver'] = msg[1:]
+                    recv_name = clientsDB[addr[1]]['receiver']
                     print(f"Receiver Name is: {clientsDB[addr[1]]['receiver']}")
-                    cancel_client_timer(client_timer)
-                    client_timer = start_client_timer(conn, 5)
+
                 elif msg == DISCONNECT_MESSAGE:
                     connected = False
                 else:
                     clientsDB[addr[1]]['messages'].append(msg)
-                    cancel_client_timer(client_timer)
-                    client_timer = start_client_timer(conn, 5)
+                    try:
+                        transfer_message_to_client(recv_name, msg)
+                    except:
+                        raise Exception("Couldn't send message to client")
+                    client_timer = reset_client_timer(client_timer, conn, TIMEOUT_SECONDS)
 
                 print(f"[{addr}] {msg}")
-                recv_name = clientsDB[addr[1]]['receiver']
 
-                try:
-                    transfer_message_to_client(recv_name, msg)
-                except:
-                    raise Exception("Couldn't send message to client")
                 # Send Message back to same client
                 # conn.send(f"{msg}".encode(FORMAT))
 
@@ -94,7 +89,7 @@ def transfer_message_to_client(receiverName, msg):
 
 def start_server():
     print("[STARTING] server is starting...")
-    num_clients = 0
+    NUM_CLIENT = 0
     server.listen()
     print(f"[LISTENING] Server is listening on {SERVER}")
     while True:
