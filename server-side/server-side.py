@@ -45,7 +45,7 @@ def handle_client(conn, addr):
                 except:
                     raise Exception("Couldn't send message to client")
                 # Send Message back to same client
-                conn.send(f"{msg}".encode(FORMAT))
+                # conn.send(f"{msg}".encode(FORMAT))
 
     conn.close()
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 2}")
