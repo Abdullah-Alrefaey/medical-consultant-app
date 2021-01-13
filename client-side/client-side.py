@@ -53,9 +53,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
 
             # Start Handling incoming messages from other client
             # Start a new thread for this Client
-            # thread = threading.Thread(target=self.set_interval, args=(self.handle_received_message, 0.3))
-            # thread.start()
-            self.set_interval(self.handle_received_message, 0.4)
+            self.client_timer = self.set_interval(self.handle_received_message, 0.4)
         except:
             raise Exception("Couldn't connect to server")
 
@@ -63,6 +61,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.send_message(DISCONNECT_MESSAGE)
         self.status_label.setText("Disconnect From Server!")
         self.client_message_text.setDisabled(True)
+        self.client_timer.cancel()
 
     def handle_received_message(self):
         # print("Start Receiving..")
