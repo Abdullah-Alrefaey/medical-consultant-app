@@ -68,6 +68,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.disconnect_btn.setDisabled(True)
         self.client_timer.cancel()
         self.client.close()
+        self.client = None
 
     def handle_received_message(self):
         if self.client:
@@ -77,6 +78,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             if received_message == TIMEOUT_MESSAGE:
                 self.client_timer.cancel()
                 self.client.close()
+                self.client = None
                 self.server_message_text.setText(received_message)
                 self.status_label.setText("Disconnect From Server!")
                 self.client_message_text.setDisabled(True)
