@@ -7,9 +7,10 @@ SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
-TIMEOUT_SECONDS = 20
+TIMEOUT_SECONDS = 10
 clientsDB = {}
 
+# Create Socket Object and bind it to specific address
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
@@ -95,7 +96,7 @@ def start_server():
     while True:
         # Accept Client Connection
         conn, addr = server.accept()
-
+        
         # Start a new thread for this Client
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         thread.start()
