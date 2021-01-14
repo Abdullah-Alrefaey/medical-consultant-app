@@ -89,18 +89,22 @@ def start_server(server):
         conn, addr = server.accept()
         conn.settimeout(TIMEOUT_SECONDS)
 
-        # Start a new thread for this Client
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
-        thread.start()
-
-        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
-
         # Add the new Client to a dictionary
         NUM_CLIENT += 1
         new_client = {"id": NUM_CLIENT, "name": "", "receiver": "", "connection": conn, "address": addr, "messages": []}
         clientsDB[addr[1]] = new_client
         print(new_client)
 
+        # TODO
+        # Check if client Exists in Database
+        # If yes, create thread
+        # If no, don't create thread and close conn
+
+        # Start a new thread for this Client
+        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread.start()
+
+        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
 
 if __name__ == '__main__':
