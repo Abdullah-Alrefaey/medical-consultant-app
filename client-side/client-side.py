@@ -1,5 +1,5 @@
 # Importing Packages
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 import ClientGUI as m
 import sys
 import socket
@@ -29,9 +29,9 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.disconnect_btn.setDisabled(True)
 
     def connect_server(self):
+        self.client_name = self.client_name_text.text()
+        self.receiver_name = self.receive_name_text.text()
         SERVER, PORT = self.host.text(), int(self.port.text())
-        client_name = "@" + self.client_name_text.text()
-        receiver_name = "#" + self.receive_name_text.text()
         ADDR = (SERVER, PORT)
 
         # Creat a new Socket
@@ -60,9 +60,9 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         # Send Client and Receiver Name
         try:
             time.sleep(0.1)
-            self.send_message(client_name)
+            self.send_message("@" + self.client_name)
             time.sleep(0.1)
-            self.send_message(receiver_name)
+            self.send_message("#" + self.receiver_name)
         except socket.error as e:
             print(f"Error client and receiver sending data: {e}")
 
@@ -105,8 +105,11 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.server_message_text.setText(received_message[1:])
         else:
             self.received_message_text.setText(received_message)
+
             # Append Received Message to chat area on left side
+            received_message = self.receiver_name + ": " + received_message
             self.chat_area.append(received_message)
+            self.chat_area.setAlignment(QtCore.Qt.AlignLeft)
 
 
     def message_changed(self):
@@ -119,7 +122,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.send_message(message)
             # Append Sent Message to chat area on right side
             self.chat_area.append(message)
-            # self.chat_area.setAlignment()
+            self.chat_area.setAlignment(QtCore.Qt.AlignRight)
             self.client_message_text.clear()
 
 
