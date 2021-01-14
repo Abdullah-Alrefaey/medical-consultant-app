@@ -12,14 +12,18 @@ TIMEOUT_SECONDS = 180                                   # Number of seconds to w
 NUM_CLIENT = 0                                          # Number of current clients
 clientsDB = {}                                          # Dictionary to save clients
 
-# Create Socket Object and bind it to specific address
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(ADDR)
 
+def main():
+    # Create Socket Object and bind it to specific address
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(ADDR)
+
+    # Starting Server
+    start_server(server)
 
 def disconnect_client(conn, addr, msg):
     global NUM_CLIENT
-    print(f"[Disconnecting Client] {conn}")
+    print(f"[Disconnecting Client] {addr}")
     conn.send(f"{msg}".encode(FORMAT))
     conn.close()
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 2}")
@@ -27,7 +31,6 @@ def disconnect_client(conn, addr, msg):
     # Remove client from DB
     clientsDB.pop(addr[1], None)
     NUM_CLIENT -= 1
-
 
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
@@ -46,6 +49,8 @@ def handle_client(conn, addr):
                 # Save client name one time
                 if msg[0] == "@":
                     clientsDB[addr[1]]['name'] = msg[1:]
+                    # Send Message back to same client
+                    conn.send(f"$Welcome, {clientsDB[addr[1]]['name']}".encode(FORMAT))
 
                 # Save Receiver name one time
                 elif msg[0] == "#":
@@ -59,17 +64,12 @@ def handle_client(conn, addr):
                     clientsDB[addr[1]]['messages'].append(msg)
                     try:
                         transfer_message_to_client(recv_name, msg)
-                        print(f"[{addr}] {msg}")
+                        print(f"[{addr}][Msg Received] {msg}")
                     except:
                         raise Exception("Couldn't send message to client")
 
-                # Send Message back to same client
-                # conn.send(f"{msg}".encode(FORMAT))
-
-    # conn.close()
-    print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 2}")
+                
         
-
 def transfer_message_to_client(receiverName, msg):
     # Get the receiver who the client want to send message to
     for key, value in clientsDB.items():
@@ -79,8 +79,7 @@ def transfer_message_to_client(receiverName, msg):
             receiver_conn.send(f"{msg}".encode(FORMAT))
             break
 
-
-def start_server():
+def start_server(server):
     print("[STARTING] server is starting...")
     global NUM_CLIENT
     server.listen()
@@ -103,5 +102,7 @@ def start_server():
         print(new_client)
 
 
-# Starting Server
-start_server()
+
+if __name__ == '__main__':
+    main()
+
