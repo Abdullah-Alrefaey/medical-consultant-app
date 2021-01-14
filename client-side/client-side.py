@@ -111,6 +111,10 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.chat_area.append(received_message)
             self.chat_area.setAlignment(QtCore.Qt.AlignLeft)
 
+            # self.chatting.setText(
+            #     '%s<p>%s</p>' % (self.chatting.text(), received_message))
+            # self.chatting.setAlignment(QtCore.Qt.AlignLeft)
+
 
     def message_changed(self):
         message = self.client_message_text.text()
@@ -123,7 +127,11 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             # Append Sent Message to chat area on right side
             self.chat_area.append(message)
             self.chat_area.setAlignment(QtCore.Qt.AlignRight)
-            self.client_message_text.clear()
+
+            # self.chatting.setText(
+            #     '%s<p>%s</p>' % (self.chatting.text(), message))
+            # self.chatting.setAlignment(QtCore.Qt.AlignRight)
+            # self.client_message_text.clear()
 
 
     def send_message(self, msg):
