@@ -1,10 +1,10 @@
 # Importing Packages
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 import ClientGUI as m
 import sys
 import socket
 import time
-from threading import Timer
+from threading import Thread, Event
 
 HEADER = 64
 FORMAT = 'utf-8'
@@ -28,69 +28,93 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.client_message_text.setDisabled(True)
         self.disconnect_btn.setDisabled(True)
 
-
-    def set_interval(self, func, sec):
-        def func_wrapper():
-            self.set_interval(func, sec)
-            func()
-
-        t = Timer(sec, func_wrapper)
-        t.start()
-        return t
-
     def connect_server(self):
+        self.client_name = self.client_name_text.text()
+        self.receiver_name = self.receive_name_text.text()
         SERVER, PORT = self.host.text(), int(self.port.text())
-        client_name = "@" + self.client_name_text.text()
-        receiver_name = "#" + self.receive_name_text.text()
         ADDR = (SERVER, PORT)
+
+        # Creat a new Socket
         try:
             self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.client.connect(ADDR)
-            self.status_label.setText("Connected To Successfully!")
-            self.server_message_text.setText("...")
-            self.client_message_text.setDisabled(False)
-            self.disconnect_btn.setDisabled(False)
-            time.sleep(0.1)
-            self.send_message(client_name)
-            time.sleep(0.1)
-            self.send_message(receiver_name)
+        except socket.error as e:
+            print(f"Error creating socket: {e}")
+            sys.exit(1)
 
-            # Start Handling incoming messages from other client
-            # Start a new thread for this Client
-            self.client_timer = self.set_interval(self.handle_received_message, 0.3)
-        except:
-            raise Exception("Couldn't connect to server")
+        # Connect to a given host/port
+        try:
+            self.client.connect(ADDR)
+        except socket.gaierror as e:
+            print(f"Address-related error connecting to server: {e}")
+            sys.exit(1)
+        except socket.error as e:
+            print(f"Connection error: {e}")
+            sys.exit(1)
+
+        # If Connected Successfully
+        self.status_label.setText("Connected To Successfully!")
+        self.server_message_text.setText("...")
+        self.client_message_text.setDisabled(False)
+        self.disconnect_btn.setDisabled(False)
+
+        # Send Client and Receiver Name
+        try:
+            time.sleep(0.1)
+            self.send_message("@" + self.client_name)
+            time.sleep(0.1)
+            self.send_message("#" + self.receiver_name)
+        except socket.error as e:
+            print(f"Error client and receiver sending data: {e}")
+
+        # Start Handling incoming messages from other client
+        # Start a new Timer thread for this Client
+        self.client_timer = setInterval(0.3, self.handle_received_message)
 
     def disconnect_server(self):
         self.send_message(DISCONNECT_MESSAGE)
         self.status_label.setText("Disconnect From Server!")
+        self.server_message_text.setText("Bye, " + self.client_name_text.text())
         self.client_message_text.setDisabled(True)
         self.disconnect_btn.setDisabled(True)
         self.client_timer.cancel()
         self.client.close()
-        self.client = None
 
     def handle_received_message(self):
-        # TODO
-        # Check if server is still running
-        if self.client:
-            try:
-                received_message = self.client.recv(2048).decode(FORMAT)
+        global received_message
+        try:
+            received_message = self.client.recv(2048).decode(FORMAT)
+        except socket.error as e:
+            print(f"Error receiving data: {e}")
+            sys.exit(1)
+        # socket was closed for some other reason
+        except ConnectionResetError:
+            self.status_label.setText("Server is Closed!")
+            self.client_message_text.setDisabled(True)
+            self.disconnect_btn.setDisabled(True)
 
-                # Handle TIMEOUT Connection
-                if received_message == TIMEOUT_MESSAGE:
-                    self.client_timer.cancel()
-                    self.client.close()
-                    self.client = None
-                    self.server_message_text.setText(received_message)
-                    self.status_label.setText("Disconnect From Server!")
-                    self.client_message_text.setDisabled(True)
-                    self.disconnect_btn.setDisabled(True)
-                else:
-                    self.received_message_text.setText(received_message)
-            # socket was closed for some other reason
-            except ConnectionResetError:
-                self.status_label.setText("Server is Closed!")
+        # Handle TIMEOUT Connection
+        if received_message == TIMEOUT_MESSAGE:
+            self.client_timer.cancel()
+            self.client.close()
+            self.client = None
+            self.server_message_text.setText(received_message)
+            self.status_label.setText("Disconnect From Server!")
+            self.client_message_text.setDisabled(True)
+            self.disconnect_btn.setDisabled(True)
+        elif received_message[0] == "$":
+            self.server_message_text.setText(received_message[1:])
+        else:
+            self.received_message_text.setText(received_message)
+
+            # Append Received Message to chat area on left side
+            received_message = self.receiver_name + ": " + received_message
+            self.chat_area.append(received_message)
+            self.chat_area.setAlignment(QtCore.Qt.AlignLeft)
+
+            # self.chatting.setText(
+            #     '%s<p>%s</p>' % (self.chatting.text(), received_message))
+            # self.chatting.setAlignment(QtCore.Qt.AlignLeft)
+
 
     def message_changed(self):
         message = self.client_message_text.text()
@@ -100,7 +124,14 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.disconnect_server()
         else:
             self.send_message(message)
-            self.client_message_text.clear()
+            # Append Sent Message to chat area on right side
+            self.chat_area.append(message)
+            self.chat_area.setAlignment(QtCore.Qt.AlignRight)
+
+            # self.chatting.setText(
+            #     '%s<p>%s</p>' % (self.chatting.text(), message))
+            # self.chatting.setAlignment(QtCore.Qt.AlignRight)
+            # self.client_message_text.clear()
 
 
     def send_message(self, msg):
@@ -110,8 +141,25 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         send_length += b' ' * (HEADER - len(send_length))
         self.client.send(send_length)
         self.client.send(message)
-        # received_message = self.client.recv(2048).decode(FORMAT)
-        # self.server_message_text.setText(received_message)
+
+
+# Class to creat an interval for specific function using Threads
+class setInterval():
+    def __init__(self, interval, action) :
+        self.interval = interval
+        self.action = action
+        self.stopEvent = Event()
+        thread = Thread(target=self.__setInterval)
+        thread.start()
+
+    def __setInterval(self) :
+        nextTime = time.time() + self.interval
+        while not self.stopEvent.wait(nextTime-time.time()):
+            nextTime += self.interval
+            self.action()
+
+    def cancel(self) :
+        self.stopEvent.set()
 
 
 def main():

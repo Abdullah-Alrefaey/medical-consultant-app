@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>577</width>
-    <height>488</height>
+    <width>552</width>
+    <height>773</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -681,7 +681,32 @@
            </item>
           </layout>
          </item>
-         <item row="3" column="0">
+         <item row="5" column="0">
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <widget class="QLineEdit" name="client_message_text">
+             <property name="font">
+              <font>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::ClickFocus</enum>
+             </property>
+             <property name="inputMask">
+              <string/>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="placeholderText">
+              <string>Enter Your Message</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="6" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_11">
            <item>
             <widget class="QLabel" name="label_5">
@@ -735,32 +760,10 @@
            </item>
           </layout>
          </item>
-         <item row="2" column="0">
-          <layout class="QVBoxLayout" name="verticalLayout_2">
-           <item>
-            <widget class="QLineEdit" name="client_message_text">
-             <property name="font">
-              <font>
-               <pointsize>10</pointsize>
-              </font>
-             </property>
-             <property name="focusPolicy">
-              <enum>Qt::ClickFocus</enum>
-             </property>
-             <property name="inputMask">
-              <string/>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="placeholderText">
-              <string>Enter Your Message</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+         <item row="4" column="0">
+          <widget class="QTextEdit" name="chat_area"/>
          </item>
-         <item row="1" column="0">
+         <item row="2" column="0">
           <spacer name="verticalSpacer">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -772,6 +775,52 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Conversation</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QScrollArea" name="scrollArea">
+           <property name="verticalScrollBarPolicy">
+            <enum>Qt::ScrollBarAsNeeded</enum>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QAbstractScrollArea::AdjustToContents</enum>
+           </property>
+           <property name="widgetResizable">
+            <bool>true</bool>
+           </property>
+           <widget class="QWidget" name="scrollAreaWidgetContents">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>500</width>
+              <height>85</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_5">
+             <item row="0" column="0">
+              <widget class="QLabel" name="chatting">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
          </item>
         </layout>
        </item>
@@ -839,7 +888,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>577</width>
+     <width>552</width>
      <height>26</height>
     </rect>
    </property>
