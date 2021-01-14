@@ -57,7 +57,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
 
             # Start Handling incoming messages from other client
             # Start a new thread for this Client
-            self.client_timer = self.set_interval(self.handle_received_message, 0.4)
+            self.client_timer = self.set_interval(self.handle_received_message, 0.3)
         except:
             raise Exception("Couldn't connect to server")
 
@@ -71,25 +71,36 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.client = None
 
     def handle_received_message(self):
+        # TODO
+        # Check if server is still running
         if self.client:
-            received_message = self.client.recv(2048).decode(FORMAT)
+            try:
+                received_message = self.client.recv(2048).decode(FORMAT)
 
-            # Handle TIMEOUT Connection
-            if received_message == TIMEOUT_MESSAGE:
-                self.client_timer.cancel()
-                self.client.close()
-                self.client = None
-                self.server_message_text.setText(received_message)
-                self.status_label.setText("Disconnect From Server!")
-                self.client_message_text.setDisabled(True)
-                self.disconnect_btn.setDisabled(True)
-            else:
-                self.received_message_text.setText(received_message)
+                # Handle TIMEOUT Connection
+                if received_message == TIMEOUT_MESSAGE:
+                    self.client_timer.cancel()
+                    self.client.close()
+                    self.client = None
+                    self.server_message_text.setText(received_message)
+                    self.status_label.setText("Disconnect From Server!")
+                    self.client_message_text.setDisabled(True)
+                    self.disconnect_btn.setDisabled(True)
+                else:
+                    self.received_message_text.setText(received_message)
+            # socket was closed for some other reason
+            except ConnectionResetError:
+                self.status_label.setText("Server is Closed!")
 
     def message_changed(self):
         message = self.client_message_text.text()
-        self.send_message(message)
-        self.client_message_text.clear()
+
+        # Check if client disconnect from server or normal message
+        if message == DISCONNECT_MESSAGE:
+            self.disconnect_server()
+        else:
+            self.send_message(message)
+            self.client_message_text.clear()
 
 
     def send_message(self, msg):

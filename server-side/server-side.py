@@ -1,84 +1,75 @@
+# Importing Modules
 import socket
 import threading
 
-HEADER = 64
-PORT = 5050
-SERVER = socket.gethostbyname(socket.gethostname())
-ADDR = (SERVER, PORT)
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
-TIMEOUT_SECONDS = 20
-clientsDB = {}
-ConnectedSocs = {}
+HEADER = 64                                             # Number of Bytes for message header
+PORT = 5050                                             # PORT Number that the socket will listen to
+SERVER = socket.gethostbyname(socket.gethostname())     # Get IP (HOST) of local connected device
+ADDR = (SERVER, PORT)                                   # Address of socket to connect
+FORMAT = 'utf-8'                                        # Encoding and Decoding messages Foramt
+DISCONNECT_MESSAGE = "!DISCONNECT"                      # DISCONNECT_MESSAGE (if sent, the server will close connection of that client)
+TIMEOUT_SECONDS = 180                                   # Number of seconds to wait before disconnect the idle client
+NUM_CLIENT = 0
+clientsDB = {}                                          # Dictionary to save clients
+
+# Create Socket Object and bind it to specific address
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
 
-def reset_client_timer(timerObj, addr, sec):
-    if timerObj is None:
-        timer = threading.Timer(sec, disconnect_client, (addr, "!TIMEOUT"))
-        timer.start()
-        print("Timer Started..")
-        return timer
-    else:
-        timerObj.cancel()
-        print("Timer Canceled")
-        timer = threading.Timer(sec, disconnect_client, (addr, "!TIMEOUT"))
-        timer.start()
-        print("Timer Started..")
-        return timer
-
-
-def disconnect_client(addr, msg):
-    print("Disconnecting Client..")
-    clientsDB[addr]['connection'].send(f"{msg}".encode(FORMAT))
-    clientsDB[addr]['connection'].close()
+def disconnect_client(conn, addr, msg):
+    print(f"[Disconnecting Client] {conn}")
+    conn.send(f"{msg}".encode(FORMAT))
+    conn.close()
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 2}")
-    clientsDB.pop(addr)
-    ConnectedSocs[addr] = False
+
+    # Remove client from DB
+    print(addr[1])
+    clientsDB.pop(addr[1], None)
+    NUM_CLIENT -= 1
+    print(clientsDB)
 
 
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
-    print()
-    client_timer = reset_client_timer(None, addr[1], TIMEOUT_SECONDS)
 
-    ConnectedSocs[addr[1]] = True
-    while ConnectedSocs[addr[1]]:
-        msg_length = clientsDB[addr[1]]['connection'].recv(HEADER).decode(FORMAT)
+    connected = True
+    while connected:        
+        try:
+            msg_length = conn.recv(HEADER).decode(FORMAT)
+        except socket.timeout:
+             disconnect_client(conn, addr, "!TIMEOUT")
+
         if msg_length:
             msg_length = int(msg_length)
-            msg = clientsDB[addr[1]]['connection'].recv(msg_length).decode(FORMAT)
+            msg = conn.recv(msg_length).decode(FORMAT)
             if msg:
                 # Save client name one time
                 if msg[0] == "@":
                     clientsDB[addr[1]]['name'] = msg[1:]
-                    print(f"Client Name is: {clientsDB[addr[1]]['name']}")
 
                 # Save Receiver name one time
                 elif msg[0] == "#":
                     clientsDB[addr[1]]['receiver'] = msg[1:]
                     recv_name = clientsDB[addr[1]]['receiver']
-                    print(f"Receiver Name is: {clientsDB[addr[1]]['receiver']}")
 
                 elif msg == DISCONNECT_MESSAGE:
-                    ConnectedSocs[addr[1]] = False
+                    disconnect_client(conn, addr, "Disconnect Client")
+                    connected = False
                 else:
                     clientsDB[addr[1]]['messages'].append(msg)
                     try:
                         transfer_message_to_client(recv_name, msg)
+                        print(f"[{addr}] {msg}")
                     except:
                         raise Exception("Couldn't send message to client")
-                    client_timer = reset_client_timer(client_timer, addr[1], TIMEOUT_SECONDS)
-
-                print(f"[{addr}] {msg}")
 
                 # Send Message back to same client
                 # conn.send(f"{msg}".encode(FORMAT))
 
-    clientsDB[addr[1]]['connection'].close()
+    # conn.close()
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 2}")
-
+        
 
 def transfer_message_to_client(receiverName, msg):
     # Get the receiver who the client want to send message to
@@ -98,6 +89,7 @@ def start_server():
     while True:
         # Accept Client Connection
         conn, addr = server.accept()
+        conn.settimeout(TIMEOUT_SECONDS)
 
         # Start a new thread for this Client
         thread = threading.Thread(target=handle_client, args=(conn, addr))
@@ -107,7 +99,7 @@ def start_server():
 
         # Add the new Client to a dictionary
         NUM_CLIENT += 1
-        new_client = {"id": NUM_CLIENT, "name": "", "receiver": "", "connection": conn, "messages": []}
+        new_client = {"id": NUM_CLIENT, "name": "", "receiver": "", "connection": conn, "address": addr, "messages": []}
         clientsDB[addr[1]] = new_client
         print(new_client)
 
