@@ -9,7 +9,7 @@ ADDR = (SERVER, PORT)                                   # Address of socket to c
 FORMAT = 'utf-8'                                        # Encoding and Decoding messages Foramt
 DISCONNECT_MESSAGE = "!DISCONNECT"                      # DISCONNECT_MESSAGE (if sent, the server will close connection of that client)
 TIMEOUT_SECONDS = 180                                   # Number of seconds to wait before disconnect the idle client
-NUM_CLIENT = 0
+NUM_CLIENT = 0                                          # Number of current clients
 clientsDB = {}                                          # Dictionary to save clients
 
 # Create Socket Object and bind it to specific address
@@ -18,16 +18,15 @@ server.bind(ADDR)
 
 
 def disconnect_client(conn, addr, msg):
+    global NUM_CLIENT
     print(f"[Disconnecting Client] {conn}")
     conn.send(f"{msg}".encode(FORMAT))
     conn.close()
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 2}")
 
     # Remove client from DB
-    print(addr[1])
     clientsDB.pop(addr[1], None)
     NUM_CLIENT -= 1
-    print(clientsDB)
 
 
 def handle_client(conn, addr):
@@ -83,7 +82,7 @@ def transfer_message_to_client(receiverName, msg):
 
 def start_server():
     print("[STARTING] server is starting...")
-    NUM_CLIENT = 0
+    global NUM_CLIENT
     server.listen()
     print(f"[LISTENING] Server is listening on {SERVER}")
     while True:
