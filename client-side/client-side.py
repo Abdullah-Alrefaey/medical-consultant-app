@@ -105,6 +105,8 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.server_message_text.setText(received_message[1:])
         else:
             self.received_message_text.setText(received_message)
+            # Append Received Message to chat area on left side
+            self.chat_area.append(received_message)
 
 
     def message_changed(self):
@@ -115,6 +117,9 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.disconnect_server()
         else:
             self.send_message(message)
+            # Append Sent Message to chat area on right side
+            self.chat_area.append(message)
+            # self.chat_area.setAlignment()
             self.client_message_text.clear()
 
 

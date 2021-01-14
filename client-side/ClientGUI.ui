@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>577</width>
-    <height>488</height>
+    <width>543</width>
+    <height>710</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -681,7 +681,7 @@
            </item>
           </layout>
          </item>
-         <item row="3" column="0">
+         <item row="5" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_11">
            <item>
             <widget class="QLabel" name="label_5">
@@ -735,7 +735,7 @@
            </item>
           </layout>
          </item>
-         <item row="2" column="0">
+         <item row="4" column="0">
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
             <widget class="QLineEdit" name="client_message_text">
@@ -772,6 +772,23 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Conversation</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QTextEdit" name="chat_area"/>
          </item>
         </layout>
        </item>
@@ -839,7 +856,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>577</width>
+     <width>543</width>
      <height>26</height>
     </rect>
    </property>
