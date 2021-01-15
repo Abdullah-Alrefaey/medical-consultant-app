@@ -34,10 +34,17 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.receiver_name = self.receive_name_text.text()
         SERVER, PORT = self.host.text(), int(self.port.text())
         ADDR = (SERVER, PORT)
+        # Create an SSL context
+        context = ssl.SSLContext()
+        context.verify_mode = ssl.CERT_REQUIRED
 
-        # Creat a new Socket
+        # Load CA certificate with which the client will validate the server certificate
+        context.load_verify_locations("RootCA.pem")
+        # Create a new Socket
         try:
-            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            # Make the client socket suitable for secure communication
+            self.client = context.wrap_socket(self.clientSocket)
         except socket.error as e:
             print(f"Error creating socket: {e}")
             sys.exit(1)
@@ -45,6 +52,30 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         # Connect to a given host/port
         try:
             self.client.connect(ADDR)
+
+            # Obtain the certificate from the server
+            server_cert = self.client.getpeercert()
+
+            # Validate whether the Certificate is indeed issued to the server
+            subject = dict(item[0] for item in server_cert['subject'])
+            commonName = subject['commonName']
+            print(commonName)
+            if not server_cert:
+                raise Exception("Unable to retrieve server certificate")
+
+            if commonName != 'Example-Root-CA':
+                raise Exception("Incorrect common name in server certificate")
+
+            notAfterTimestamp = ssl.cert_time_to_seconds(server_cert['notAfter'])
+            notBeforeTimestamp = ssl.cert_time_to_seconds(server_cert['notBefore'])
+            currentTimeStamp = time.time()
+
+            if currentTimeStamp > notAfterTimestamp:
+                raise Exception("Expired server certificate")
+
+            if currentTimeStamp < notBeforeTimestamp:
+                raise Exception("Server certificate not yet active")
+
         except socket.gaierror as e:
             print(f"Address-related error connecting to server: {e}")
             sys.exit(1)
@@ -79,6 +110,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.disconnect_btn.setDisabled(True)
         self.client_timer.cancel()
         self.client.close()
+        self.clientSocket.close()
 
     def handle_received_message(self):
         global received_message
@@ -97,6 +129,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         if received_message == TIMEOUT_MESSAGE:
             self.client_timer.cancel()
             self.client.close()
+            self.clientSocket.close()
             self.client = None
             self.server_message_text.setText(received_message)
             self.status_label.setText("Disconnect From Server!")
@@ -107,6 +140,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         elif received_message == "User Not Authorized":
             self.client_timer.cancel()
             self.client.close()
+            self.clientSocket.close()
             self.client = None
             self.server_message_text.setText(received_message)
             self.status_label.setText("Not Authorized")

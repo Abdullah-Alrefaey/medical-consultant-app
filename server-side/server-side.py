@@ -103,9 +103,16 @@ def start_server(server):
     print(f"[LISTENING] Server is listening on {SERVER}")
     while True:
         # Accept Client Connection
-        conn, addr = server.accept()
+        tempconn, addr = server.accept()
+        # Make the socket connection to the clients secure through SSLSocket
+        conn = ssl.wrap_socket(tempconn,
+                               server_side=True,
+                               ca_certs="RootCA.pem",
+                               certfile="RootCA.crt",
+                               keyfile="RootCA.key",
+                               cert_reqs=ssl.CERT_OPTIONAL,
+                               ssl_version=ssl.PROTOCOL_TLSv1_2)
         conn.settimeout(TIMEOUT_SECONDS)
-
         # Add the new Client to a dictionary
         NUM_CLIENT += 1
         new_client = {"id": NUM_CLIENT, "name": "", "receiver": "", "connection": conn, "address": addr, "messages": []}
