@@ -4,19 +4,20 @@ import threading
 import ssl
 from tinydb import TinyDB, Query
 
-import ssl
 
-HEADER = 64  # Number of Bytes for message header
-PORT = 5050  # PORT Number that the socket will listen to
-SERVER = socket.gethostbyname(socket.gethostname())  # Get IP (HOST) of local connected device
-ADDR = (SERVER, PORT)  # Address of socket to connect
-FORMAT = 'utf-8'  # Encoding and Decoding messages Format
-DISCONNECT_MESSAGE = "!DISCONNECT"  # DISCONNECT_MESSAGE (if sent, the server will close connection of that client)
-TIMEOUT_SECONDS = 180  # Number of seconds to wait before disconnect the idle client
-NUM_CLIENT = 0  # Number of current clients
-clientsDB = {}  # Dictionary to save clients
-db = TinyDB('Users.json')
-User = Query()
+HEADER = 64                                                     # Number of Bytes for message header
+PORT = 5050                                                     # PORT Number that the socket will listen to
+SERVER = socket.gethostbyname(socket.gethostname())             # Get IP (HOST) of local connected device
+ADDR = (SERVER, PORT)                                           # Address of socket to connect
+FORMAT = 'utf-8'                                                # Encoding and Decoding messages Format
+DISCONNECT_MESSAGE = "!DISCONNECT"                              # DISCONNECT_MESSAGE (if sent, the server will close connection of that client)
+TIMEOUT_SECONDS = 180                                           # Number of seconds to wait before disconnect the idle client
+NUM_CLIENT = 0                                                  # Number of current clients
+clientsDB = {}                                                  # Dictionary to save clients
+db = TinyDB('Users.json')                                       # Database Object for Registered User
+User = Query()                                                  # Database Query for searching
+
+
 def main():
     # Create Socket Object and bind it to specific address
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -33,7 +34,7 @@ def disconnect_client(conn, addr, msg):
     conn.close()
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 2}")
 
-    # Remove client from DB
+    # Remove client from clientsDB
     clientsDB.pop(addr[1], None)
     NUM_CLIENT -= 1
 
@@ -43,14 +44,18 @@ def handle_client(conn, addr):
 
     connected = True
     while connected:
+        # Handle socket.timeout exception (raised by socket.settimeout()) 
         try:
             msg_length = conn.recv(HEADER).decode(FORMAT)
         except socket.timeout:
             disconnect_client(conn, addr, "!TIMEOUT")
             break
 
+        # If socket received a message header successfully
         if msg_length:
             msg_length = int(msg_length)
+            
+            # Actual Message
             msg = conn.recv(msg_length).decode(FORMAT)
             if msg:
                 # Save client name one time
@@ -72,6 +77,7 @@ def handle_client(conn, addr):
                         print(f"[{addr}][Msg Received] {msg}")
                     except:
                         raise Exception("Couldn't send message to client")
+
                 # Check if Client Finished Sending Initial Data
                 if clientsDB[addr[1]]['name'] and clientsDB[addr[1]]['receiver']:
                     # Check if Name is in The DB, If Not Disconnect
@@ -101,9 +107,11 @@ def start_server(server):
     global NUM_CLIENT
     server.listen()
     print(f"[LISTENING] Server is listening on {SERVER}")
+
     while True:
         # Accept Client Connection
         tempconn, addr = server.accept()
+
         # Make the socket connection to the clients secure through SSLSocket
         conn = ssl.wrap_socket(tempconn,
                                server_side=True,
@@ -113,6 +121,7 @@ def start_server(server):
                                cert_reqs=ssl.CERT_OPTIONAL,
                                ssl_version=ssl.PROTOCOL_TLSv1_2)
         conn.settimeout(TIMEOUT_SECONDS)
+
         # Add the new Client to a dictionary
         NUM_CLIENT += 1
         new_client = {"id": NUM_CLIENT, "name": "", "receiver": "", "connection": conn, "address": addr, "messages": []}
