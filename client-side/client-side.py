@@ -4,6 +4,7 @@ import ClientGUI as m
 import sys
 import socket
 import time
+import ssl
 from threading import Thread, Event
 
 HEADER = 64
@@ -103,6 +104,14 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.disconnect_btn.setDisabled(True)
         elif received_message[0] == "$":
             self.server_message_text.setText(received_message[1:])
+        elif received_message == "User Not Authorized":
+            self.client_timer.cancel()
+            self.client.close()
+            self.client = None
+            self.server_message_text.setText(received_message)
+            self.status_label.setText("Not Authorized")
+            self.client_message_text.setDisabled(True)
+            self.disconnect_btn.setDisabled(True)
         else:
             self.received_message_text.setText(received_message)
 

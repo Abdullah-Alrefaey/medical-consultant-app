@@ -1,18 +1,22 @@
 # Importing Modules
 import socket
 import threading
+import ssl
+from tinydb import TinyDB, Query
 
-HEADER = 64                                             # Number of Bytes for message header
-PORT = 5050                                             # PORT Number that the socket will listen to
-SERVER = socket.gethostbyname(socket.gethostname())     # Get IP (HOST) of local connected device
-ADDR = (SERVER, PORT)                                   # Address of socket to connect
-FORMAT = 'utf-8'                                        # Encoding and Decoding messages Foramt
-DISCONNECT_MESSAGE = "!DISCONNECT"                      # DISCONNECT_MESSAGE (if sent, the server will close connection of that client)
-TIMEOUT_SECONDS = 180                                   # Number of seconds to wait before disconnect the idle client
-NUM_CLIENT = 0                                          # Number of current clients
-clientsDB = {}                                          # Dictionary to save clients
+import ssl
 
-
+HEADER = 64  # Number of Bytes for message header
+PORT = 5050  # PORT Number that the socket will listen to
+SERVER = socket.gethostbyname(socket.gethostname())  # Get IP (HOST) of local connected device
+ADDR = (SERVER, PORT)  # Address of socket to connect
+FORMAT = 'utf-8'  # Encoding and Decoding messages Format
+DISCONNECT_MESSAGE = "!DISCONNECT"  # DISCONNECT_MESSAGE (if sent, the server will close connection of that client)
+TIMEOUT_SECONDS = 180  # Number of seconds to wait before disconnect the idle client
+NUM_CLIENT = 0  # Number of current clients
+clientsDB = {}  # Dictionary to save clients
+db = TinyDB('Users.json')
+User = Query()
 def main():
     # Create Socket Object and bind it to specific address
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -20,6 +24,7 @@ def main():
 
     # Starting Server
     start_server(server)
+
 
 def disconnect_client(conn, addr, msg):
     global NUM_CLIENT
@@ -32,15 +37,17 @@ def disconnect_client(conn, addr, msg):
     clientsDB.pop(addr[1], None)
     NUM_CLIENT -= 1
 
+
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
 
     connected = True
-    while connected:        
+    while connected:
         try:
             msg_length = conn.recv(HEADER).decode(FORMAT)
         except socket.timeout:
-             disconnect_client(conn, addr, "!TIMEOUT")
+            disconnect_client(conn, addr, "!TIMEOUT")
+            break
 
         if msg_length:
             msg_length = int(msg_length)
@@ -49,8 +56,6 @@ def handle_client(conn, addr):
                 # Save client name one time
                 if msg[0] == "@":
                     clientsDB[addr[1]]['name'] = msg[1:]
-                    # Send Message back to same client
-                    conn.send(f"$Welcome, {clientsDB[addr[1]]['name']}".encode(FORMAT))
 
                 # Save Receiver name one time
                 elif msg[0] == "#":
@@ -67,9 +72,20 @@ def handle_client(conn, addr):
                         print(f"[{addr}][Msg Received] {msg}")
                     except:
                         raise Exception("Couldn't send message to client")
+                # Check if Client Finished Sending Initial Data
+                if clientsDB[addr[1]]['name'] and clientsDB[addr[1]]['receiver']:
+                    # Check if Name is in The DB, If Not Disconnect
+                    Result = db.search(User.name == clientsDB[addr[1]]['name'])
+                    if not Result:
+                        conn.send(f"User Not Authorized".encode(FORMAT))
+                        conn.close()
+                        print(f"[Disconnecting Client] {addr} {clientsDB[addr[1]]['name']}, Not Authorized")
+                        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+                        break
+                    else:
+                        # Send Message back to same client
+                        conn.send(f"$Welcome, {clientsDB[addr[1]]['name']}".encode(FORMAT))
 
-                
-        
 def transfer_message_to_client(receiverName, msg):
     # Get the receiver who the client want to send message to
     for key, value in clientsDB.items():
@@ -78,6 +94,7 @@ def transfer_message_to_client(receiverName, msg):
             receiver_conn = value['connection']
             receiver_conn.send(f"{msg}".encode(FORMAT))
             break
+
 
 def start_server(server):
     print("[STARTING] server is starting...")
@@ -92,14 +109,13 @@ def start_server(server):
         # Add the new Client to a dictionary
         NUM_CLIENT += 1
         new_client = {"id": NUM_CLIENT, "name": "", "receiver": "", "connection": conn, "address": addr, "messages": []}
-        clientsDB[addr[1]] = new_client
         print(new_client)
 
         # TODO
         # Check if client Exists in Database
         # If yes, create thread
         # If no, don't create thread and close conn
-
+        clientsDB[addr[1]] = new_client
         # Start a new thread for this Client
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         thread.start()
@@ -109,4 +125,3 @@ def start_server(server):
 
 if __name__ == '__main__':
     main()
-
