@@ -28,18 +28,21 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.client_message_text.returnPressed.connect(self.message_changed)
         self.client_message_text.setDisabled(True)
         self.disconnect_btn.setDisabled(True)
+        self.chat_area.setDisabled(True)
 
     def connect_server(self):
         self.client_name = self.client_name_text.text()
         self.receiver_name = self.receive_name_text.text()
         SERVER, PORT = self.host.text(), int(self.port.text())
         ADDR = (SERVER, PORT)
+
         # Create an SSL context
         context = ssl.SSLContext()
         context.verify_mode = ssl.CERT_REQUIRED
 
         # Load CA certificate with which the client will validate the server certificate
         context.load_verify_locations("RootCA.pem")
+
         # Create a new Socket
         try:
             self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -88,6 +91,8 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.server_message_text.setText("...")
         self.client_message_text.setDisabled(False)
         self.disconnect_btn.setDisabled(False)
+        self.chat_area.setDisabled(False)
+        self.chat_area.setReadOnly(True)
 
         # Send Client and Receiver Name
         try:
@@ -108,6 +113,8 @@ class MedicalConsultantClient(m.Ui_MainWindow):
         self.server_message_text.setText("Bye, " + self.client_name_text.text())
         self.client_message_text.setDisabled(True)
         self.disconnect_btn.setDisabled(True)
+        self.chat_area.setDisabled(True)
+        self.chat_area.clear()
         self.client_timer.cancel()
         self.client.close()
         self.clientSocket.close()
@@ -124,6 +131,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.status_label.setText("Server is Closed!")
             self.client_message_text.setDisabled(True)
             self.disconnect_btn.setDisabled(True)
+            self.chat_area.setDisabled(True)
 
         # Handle TIMEOUT Connection
         if received_message == TIMEOUT_MESSAGE:
@@ -135,6 +143,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.status_label.setText("Disconnect From Server!")
             self.client_message_text.setDisabled(True)
             self.disconnect_btn.setDisabled(True)
+            self.chat_area.setDisabled(True)
         elif received_message[0] == "$":
             self.server_message_text.setText(received_message[1:])
         elif received_message == "User Not Authorized":
@@ -146,6 +155,7 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             self.status_label.setText("Not Authorized")
             self.client_message_text.setDisabled(True)
             self.disconnect_btn.setDisabled(True)
+            self.chat_area.setDisabled(True)
         else:
             self.received_message_text.setText(received_message)
 
@@ -170,11 +180,12 @@ class MedicalConsultantClient(m.Ui_MainWindow):
             # Append Sent Message to chat area on right side
             self.chat_area.append(message)
             self.chat_area.setAlignment(QtCore.Qt.AlignRight)
+            self.client_message_text.clear()
+
 
             # self.chatting.setText(
             #     '%s<p>%s</p>' % (self.chatting.text(), message))
             # self.chatting.setAlignment(QtCore.Qt.AlignRight)
-            # self.client_message_text.clear()
 
 
     def send_message(self, msg):
