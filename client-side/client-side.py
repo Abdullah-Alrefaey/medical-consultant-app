@@ -7,10 +7,10 @@ import time
 import ssl
 from threading import Thread, Event
 
-HEADER = 64
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
-TIMEOUT_MESSAGE = "!TIMEOUT"
+HEADER = 64                                     # Number of Bytes for message header
+FORMAT = 'utf-8'                                # Encoding and Decoding messages Format
+DISCONNECT_MESSAGE = "!DISCONNECT"              # DISCONNECT_MESSAGE (if sent, the server will close connection of that client)
+TIMEOUT_MESSAGE = "!TIMEOUT"                    # TIMEOUT_MESSAGE (if sent, the server will close connection of that client)
 
 
 class MedicalConsultantClient(m.Ui_MainWindow):

@@ -11,6 +11,7 @@ SERVER = socket.gethostbyname(socket.gethostname())             # Get IP (HOST) 
 ADDR = (SERVER, PORT)                                           # Address of socket to connect
 FORMAT = 'utf-8'                                                # Encoding and Decoding messages Format
 DISCONNECT_MESSAGE = "!DISCONNECT"                              # DISCONNECT_MESSAGE (if sent, the server will close connection of that client)
+TIMEOUT_MESSAGE = "!TIMEOUT"                    # TIMEOUT_MESSAGE (if sent, the server will close connection of that client)
 TIMEOUT_SECONDS = 180                                           # Number of seconds to wait before disconnect the idle client
 NUM_CLIENT = 0                                                  # Number of current clients
 clientsDB = {}                                                  # Dictionary to save clients
