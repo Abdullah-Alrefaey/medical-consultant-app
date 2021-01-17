@@ -132,3 +132,5 @@ dmypy.json
 .pyre/
 
 server-side/playground.py
+
+video/Medical_Consultant.tscproj
