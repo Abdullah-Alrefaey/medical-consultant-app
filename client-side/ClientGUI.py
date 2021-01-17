@@ -385,7 +385,7 @@ class Ui_MainWindow(object):
         self.label_4.setText(_translate("MainWindow", "PORT"))
         self.client_name_text.setPlaceholderText(_translate("MainWindow", "Enter Your Name"))
         self.receive_name_text.setPlaceholderText(_translate("MainWindow", "Receiver"))
-        self.host.setText(_translate("MainWindow", "192.168.1.108"))
+        self.host.setText(_translate("MainWindow", "192.168.1.109"))
         self.host.setPlaceholderText(_translate("MainWindow", "HOST ADDRESS"))
         self.port.setText(_translate("MainWindow", "5050"))
         self.port.setPlaceholderText(_translate("MainWindow", "PORT NUMBER"))

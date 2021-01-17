@@ -162,7 +162,7 @@
                   <item>
                    <widget class="QLineEdit" name="host">
                     <property name="text">
-                     <string>192.168.1.108</string>
+                     <string>192.168.1.109</string>
                     </property>
                     <property name="placeholderText">
                      <string>HOST ADDRESS</string>
