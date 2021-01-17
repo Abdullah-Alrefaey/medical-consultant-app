@@ -139,8 +139,8 @@ def handle_client(conn, addr):
                             print("Couldn't send message to client")
 
                 # If the receiver is not connected
-                else:
-                    pass
+                elif not clientsDB[addr[1]]['receiver']:
+                    print("Receiver is not connected")
 
 
 def disconnect_client(conn, addr, msg):
